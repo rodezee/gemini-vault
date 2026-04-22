@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '../lib/firebase';
 import { collection, addDoc, getDocs, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import NoteItem from '@/components/NoteItem';
 
 export default function Home() {
   const [input, setInput] = useState('');
@@ -20,7 +21,7 @@ export default function Home() {
     if (!input) return;
     await addDoc(collection(db, 'vault_entries'), {
       content: input,
-      category: category, // Saving the category now
+      category: category,
       timestamp: new Date()
     });
     setInput('');
@@ -56,13 +57,11 @@ export default function Home() {
 
       <div>
         {entries.map((entry: any) => (
-          <div key={entry.id} className="border-b p-2 flex justify-between items-center">
-            <div>
-              <span className="text-xs font-bold text-gray-500 block uppercase">{entry.category || 'General'}</span>
-              {entry.content}
-            </div>
-            <button onClick={() => deleteEntry(entry.id)} className="text-red-500 text-sm ml-4">Delete</button>
-          </div>
+          <NoteItem 
+            key={entry.id} 
+            entry={entry} 
+            onDelete={deleteEntry} 
+          />
         ))}
       </div>
     </main>
