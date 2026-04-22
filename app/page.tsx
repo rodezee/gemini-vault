@@ -5,7 +5,8 @@ import { collection, addDoc, getDocs, query, orderBy } from 'firebase/firestore'
 
 export default function Home() {
   const [input, setInput] = useState('');
-  const [entries, setEntries] = useState([]);
+  // CHANGE THIS LINE:
+  const [entries, setEntries] = useState<any[]>([]); 
 
   // Fetch entries
   const fetchEntries = async () => {
@@ -24,7 +25,7 @@ export default function Home() {
       timestamp: new Date()
     });
     setInput('');
-    fetchEntries(); // Refresh list
+    fetchEntries(); 
   };
 
   return (
@@ -42,7 +43,7 @@ export default function Home() {
       </div>
 
       <div>
-        {entries.map(entry => (
+        {entries.map((entry: any) => (
           <div key={entry.id} className="border-b p-2">
             {entry.content}
           </div>
