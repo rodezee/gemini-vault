@@ -1,61 +1,42 @@
-// components/NoteItem.tsx
+'use client';
 import { useState } from "react";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../lib/firebase";
 
-export default function NoteItem({ entry, onDelete }: { entry: any, onDelete: (id: string) => void }) {
-  const [loading, setLoading] = useState(false);
-  const [aiResult, setAiResult] = useState("");
+export default function NoteItem({ entry, onDelete, onUpdate }: any) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(entry.content);
 
-  const enhanceEntry = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/gemini', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: `Analyze this note and suggest 3 sub-tasks: "${entry.content}"` }),
-      });
-      const data = await response.json();
-      setAiResult(data.text);
-    } catch (e) {
-      alert("Error generating suggestion");
-    } finally {
-      setLoading(false);
-    }
+  const handleUpdate = async () => {
+    await updateDoc(doc(db, 'vault_entries', entry.id), { content: editText });
+    setIsEditing(false);
+    onUpdate();
   };
 
   return (
-    <div className="border-b p-4 my-2 bg-gray-900 rounded-lg">
-      <div className="flex justify-between items-start">
-        <div>
-          <span className="text-xs font-bold text-gray-500 block uppercase">{entry.category || 'General'}</span>
-          <p className="text-white">{entry.content}</p>
-        </div>
+    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition duration-200">
+      <div className="flex justify-between items-start mb-3">
+        <span className="px-2 py-1 bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider rounded-md">
+          {entry.category}
+        </span>
         <div className="flex gap-2">
-            {!aiResult && (
-                <button 
-                onClick={enhanceEntry} 
-                disabled={loading}
-                className="text-blue-400 text-sm border border-blue-500/30 px-2 py-1 rounded hover:bg-blue-900/20 flex items-center"
-                >
-                {loading ? (
-                    // The SVG Spinner
-                    <svg className="animate-spin h-4 w-4 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                    </svg>
-                ) : "✨ Enhance"}
-                </button>
-            )}
-            <button onClick={() => onDelete(entry.id)} className="text-red-500 text-sm p-1">Delete</button>
+          {isEditing ? (
+            <button onClick={handleUpdate} className="text-xs text-green-600 font-semibold hover:underline">Save</button>
+          ) : (
+            <button onClick={() => setIsEditing(true)} className="text-xs text-gray-400 hover:text-blue-600">Edit</button>
+          )}
+          <button onClick={() => onDelete(entry.id)} className="text-xs text-gray-400 hover:text-red-600">Delete</button>
         </div>
       </div>
 
-      {/* Inline AI Result */}
-      {aiResult && (
-        <div className="mt-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded text-blue-100 text-sm">
-          <h4 className="font-bold mb-1 text-blue-300">AI Suggestion:</h4>
-          <p className="whitespace-pre-wrap">{aiResult}</p>
-          <button onClick={() => setAiResult("")} className="mt-2 text-xs text-blue-400 underline">Close</button>
-        </div>
+      {isEditing ? (
+        <textarea 
+          className="w-full bg-gray-50 p-3 rounded-lg text-sm text-gray-800 border focus:border-blue-300 outline-none"
+          value={editText}
+          onChange={(e) => setEditText(e.target.value)}
+        />
+      ) : (
+        <p className="text-gray-700 text-sm leading-relaxed">{entry.content}</p>
       )}
     </div>
   );
